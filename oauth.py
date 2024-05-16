@@ -14,7 +14,7 @@ app.secret_key = "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" # make sure this matches 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
 GOOGLE_CLIENT_ID = "1019911793171-pipdaeturnnp4g6h38mes12hemukfa5u.apps.googleusercontent.com"
-client_secrets_file = os.path.join(pathlib.Path(__file__).parent, r"C:\Users\Shahan.Izhar\Downloads\client_secret.json")
+client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
 
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
