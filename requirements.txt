@@ -1,0 +1,7 @@
+os
+pathlib
+requests
+flask
+google
+google_auth_oauthlib
+pip
