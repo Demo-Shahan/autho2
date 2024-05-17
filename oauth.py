@@ -64,7 +64,7 @@ def callback():
     session["google_id"] = id_info.get("sub")
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
-    return redirect("/protected_area")
+    return redirect("https://calldev.sentrihub.com/medc_213821831283")
 
 
 @app.route("/logout")
@@ -81,7 +81,7 @@ def index():
 @app.route("/protected_area")
 @login_is_required
 def protected_area():
-    print(f"{session['name']} and {session['email']} and next and test {session['google_id']} line.end")
+    print(f"{session['name']} and and and {session['email']} and next and test {session['google_id']} line.end")
     return f"Hello {session['name']} and {session['email']}! <br/> <a href='/logout'><button>Logout</button></a>"
 
 
