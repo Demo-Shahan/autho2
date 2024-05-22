@@ -9,6 +9,7 @@ import google.auth.transport.requests
 import pathlib
 
 
+app = FastAPI()  # docs_url=None, redoc_url=None
 
 ############################################################## Authentication SSO ##################################
 app.secret_key = "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" # make sure this matches with that's in client_secret.json
