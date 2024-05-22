@@ -74,6 +74,12 @@ async def callback(request: Request, session: dict = Depends(get_session)):
     url = f"https://calldev.sentrihub.com/?name={name}&email={email}"
 
     return RedirectResponse(url=url)
+    
+@app.get("/logout")
+
+def logout(request: Request, session: dict = Depends(get_session)):
+    session.clear()
+    return RedirectResponse(url = "https://calldev.sentrihub.com")
 
 
 
