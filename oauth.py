@@ -8,6 +8,7 @@ from pip._vendor import cachecontrol
 import google.auth.transport.requests
 import pathlib
 import os
+import requests
 
 
 app = FastAPI()  # docs_url=None, redoc_url=None
