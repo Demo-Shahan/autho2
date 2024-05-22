@@ -4,3 +4,4 @@ flask
 google
 google_auth_oauthlib
 pip
+fastapi
