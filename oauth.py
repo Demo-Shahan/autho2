@@ -1,16 +1,17 @@
-import os
-import pathlib
-
-import requests
+from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks, WebSocket, WebSocketDisconnect, Request, Form
+from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
 from flask import Flask, session, abort, redirect, request
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
+import pathlib
 
-app = Flask("Google Login App")
+
+
+############################################################## Authentication SSO ##################################
 app.secret_key = "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" # make sure this matches with that's in client_secret.json
-
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
 GOOGLE_CLIENT_ID = "1019911793171-pipdaeturnnp4g6h38mes12hemukfa5u.apps.googleusercontent.com"
@@ -19,36 +20,36 @@ client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
     scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
-    redirect_uri="https://autho2.onrender.com/callback"
+    redirect_uri="http://localhost:3673/callback"
 )
 
+app.add_middleware(SessionMiddleware, secret_key=app.secret_key)
 
-def login_is_required(function):
-    def wrapper(*args, **kwargs):
-        if "google_id" not in session:
-            return abort(401)  # Authorization required
-        else:
-            return function()
-
-    return wrapper
+# Dependency to get the session
+def get_session(request: Request):
+    return request.session
 
 
-@app.route("/login")
-def login():
+def login_is_required(session: dict = Depends(get_session)):
+    if "google_id" not in session:
+        raise HTTPException(status_code=401, detail="Authorization required")
+
+
+@app.get("/login")
+async def login(request: Request):
     authorization_url, state = flow.authorization_url()
-    session["state"] = state
-    print(session["state"])
-    
-    return redirect(authorization_url)
+    request.session["state"] = state
+    return RedirectResponse(authorization_url)
 
+@app.get("/callback")
+async def callback(request: Request, session: dict = Depends(get_session)):
+    # flow = get_flow()
 
-@app.route("/callback")
-def callback():
-    print("Calllllllll")
-    flow.fetch_token(authorization_response=request.url)
+    flow.fetch_token(authorization_response=str(request.url))
 
-    if not session["state"] == request.args["state"]:
-        abort(500)  # State does not match!
+    if not request.session["state"] == request.query_params["state"]:
+        print('\n\ncqllback Exception\n\n')
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="State does not match!")
 
     credentials = flow.credentials
     request_session = requests.session()
@@ -61,33 +62,20 @@ def callback():
         audience=GOOGLE_CLIENT_ID
     )
 
-    session["google_id"] = id_info.get("sub")
-    session["name"] = id_info.get("name")
-    session["email"] = id_info.get("email")
-    return redirect("https://calldev.sentrihub.com/medc_213821831283")
+    request.session["google_id"] = id_info.get("sub")
+    request.session["name"] = id_info.get("name")
+    request.session["email"] = id_info.get("email")
+
+    email = request.session["email"]
+    name = request.session["name"]
+    url = f"https://calldev.sentrihub.com/?name={name}&email={email}"
+
+    return RedirectResponse(url=url)
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 
-@app.route("/")
-def index():
-    return "Hello World <a href='/login'><button>Login</button></a>"
-
-
-@app.route("/protected_area")
-@login_is_required
-def protected_area():
-    print(f"{session['name']} and and and {session['email']} and next and test {session['google_id']} line.end")
-    return f"Hello {session['name']} and {session['email']}! <br/> <a href='/logout'><button>Logout</button></a>"
-
-
+# Run the FastAPI app using Uvicorn
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
-
-
-
-    
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
